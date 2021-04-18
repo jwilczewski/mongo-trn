@@ -17,6 +17,8 @@ public class TestMultipleDocumentTransactional {
 
     public static void main(String[] args) {
         Random random = new Random();
+        long t1 = System.currentTimeMillis();
+
         TransactionOptions txnOptions = TransactionOptions.builder()
                 .readPreference(ReadPreference.primary())
                 .readConcern(ReadConcern.LOCAL)
@@ -33,7 +35,7 @@ public class TestMultipleDocumentTransactional {
                     MongoCollection<Document> users = mongoClient.getDatabase("trntest").getCollection("users");
                     int modify = random.nextInt(100);
                     users.updateOne(clientSession, new Document("login", "jkowalski"), new Document("$inc", new Document("wallet.subAccountA", modify)));
-                    users.updateOne(clientSession, new Document("login", "anowak"), new Document("$inc", new Document("wallet.subAccountB", -1 * modify)));
+                    users.updateOne(clientSession, new Document("login", "anowak"), new Document("$inc", new Document("wallet.subAccountA", -1 * modify)));
                     return "updated";
                 };
                 try {
@@ -46,13 +48,14 @@ public class TestMultipleDocumentTransactional {
             });
             LOGGER.info("stop transfering");
             mongoClient.close();
+            LOGGER.info("time: {}", System.currentTimeMillis() - t1);
         };
 
         Runnable check = () -> {
             LOGGER.info("start checking");
             MongoClient mongoClient = new MongoClient();
 
-            IntStream.range(0, 100000).forEach(i -> {
+            IntStream.range(0, 10000).forEach(i -> {
                 final ClientSession clientSession = mongoClient.startSession();
                 TransactionBody<String> txnBody = () -> {
                     MongoCollection<Document> users = mongoClient.getDatabase("trntest").getCollection("users");
@@ -63,9 +66,9 @@ public class TestMultipleDocumentTransactional {
 
                     FindIterable<Document> documentsNowak = users.find(clientSession, new Document("login", "anowak"));
                     Document walletNowak = Objects.requireNonNull(documentsNowak.first()).get("wallet", Document.class);
-                    Integer subAccountB = walletNowak.getInteger("subAccountB");
+                    Integer subAccountB = walletNowak.getInteger("subAccountA");
 
-                    if (subAccountA + subAccountB != 2000000) {
+                    if (subAccountA + subAccountB != 200000) {
                         LOGGER.error("ERROR sum: {}", subAccountA + subAccountB);
                     } else {
                         LOGGER.info("checked");
@@ -83,6 +86,7 @@ public class TestMultipleDocumentTransactional {
             });
             LOGGER.info("stop checking");
             mongoClient.close();
+            LOGGER.info("time: {}", System.currentTimeMillis() - t1);
         };
 
         IntStream.range(0, 10).forEach(i -> {
