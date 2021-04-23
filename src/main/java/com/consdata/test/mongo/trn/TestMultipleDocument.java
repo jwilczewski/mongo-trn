@@ -36,15 +36,15 @@ public class TestMultipleDocument {
             MongoClient mongoClient = new MongoClient();
             MongoCollection<Document> users = mongoClient.getDatabase("trntest").getCollection("users");
             IntStream.range(0, 10000).forEach(i -> {
-                FindIterable<Document> documentsKowalski = users.find(new Document("login", "jkowalski"));
-                Document walletKowalski = Objects.requireNonNull(documentsKowalski.first()).get("wallet", Document.class);
-                Integer subAccountA = walletKowalski.getInteger("subAccountA");
+                FindIterable<Document> documentsK = users.find(new Document("login", "jkowalski"));
+                Document walletKowalski = Objects.requireNonNull(documentsK.first()).get("wallet", Document.class);
+                Integer subAccountAKowalski = walletKowalski.getInteger("subAccountA");
 
-                FindIterable<Document> documentsNowak = users.find(new Document("login", "anowak"));
-                Document walletNowak = Objects.requireNonNull(documentsNowak.first()).get("wallet", Document.class);
-                Integer subAccountB = walletNowak.getInteger("subAccountA");
-                if (subAccountA + subAccountB != 200000) {
-                    LOGGER.error("ERROR sum: {}", subAccountA + subAccountB);
+                FindIterable<Document> documentsN = users.find(new Document("login", "anowak"));
+                Document walletNowak = Objects.requireNonNull(documentsN.first()).get("wallet", Document.class);
+                Integer subAccountANowak = walletNowak.getInteger("subAccountA");
+                if (subAccountAKowalski + subAccountANowak != 200000) {
+                    LOGGER.error("ERROR sum: {}", subAccountAKowalski + subAccountANowak);
                 } else {
                     LOGGER.info("checked");
                 }
